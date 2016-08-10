@@ -111,6 +111,7 @@ public class DocumentReader {
     public static String parseString(String documentText, Client client) throws FileNotFoundException {
         System.out.println("----INDEXOF----");
         int definedTermsStart = documentText.indexOf("ARTICLE 1");
+
         int definedTermsEnd = documentText.indexOf("ARTICLE 2");
 
         int start = documentText.indexOf('“', definedTermsStart);
@@ -130,18 +131,19 @@ public class DocumentReader {
             System.out.println();
 
             obj.put(documentText.substring(start + 1, end), documentText.substring(end + 1, delimiter));
-            String term = documentText.substring(start + 1, end);
+
             count++;
-            try {
-                client.prepareIndex("definedterms", "term", term)
-                        .setSource(obj.toString()).execute().actionGet();
-                
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
+
             start = documentText.indexOf('“', end + 1);
             end = documentText.indexOf('”', start);
 
+        }
+        try {
+            client.prepareIndex("definedterms", "term", "1")
+                    .setSource(obj.toString()).execute().actionGet();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
         PrintWriter out = new PrintWriter("DefinedTerms.json");
         out.println(obj.toString());

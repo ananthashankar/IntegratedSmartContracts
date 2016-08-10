@@ -27,26 +27,23 @@
                 <input type="file" id="myFile" size="50">
 
                 <p>Click the button below do the display the file path of the file upload button above (you must select a file first).</p>
-                <button type="submit" name="check" id="check">Check The File</button>
-                <button type="button" name="btnAjaxCall" id="btnAjaxCall">AjaxCall</button>
+                <button type="button" name="btnParseFile" id="btnParseFile">Parse My File</button>
                 <input type="hidden" name="hiddenPath" value=""/>  
                 <c:set var="hiddenPath" value="getHiddenPath()"/>
                 <input type="hidden" name="hiddenFileName" value=""/>  
                 <input type="hidden" name="page" value="1"/>
                 <input type="hidden" name="action" value="getFile"/>
                 <p id="demo" name="demo"></p>
-                <input type="text"><br>
-                <input type="radio" name="Selection" value="ExactSearch"> Exact Search<br>
-                <input type="radio" name="Selection" value="definedTerm"> Defined Term Search<br>
-                <input type="radio" name="Selection" value="SemanticSearch"> Semantic Search<br>
-                <input type="radio" name="Selection" value="SynonymnSearch"> Synonymn Search<br>
-                <input type="Submit" value="Submit">
-            </div>
+                <input type="text" name="txtSearch" id="txtSearch"><br>
+                <button type="button" name="btnSearch" id="btnSearch">Search</button>
+                <div id="ajaxGetUserServletResponse">
+                </div>
         </form>
 
         <script>
             $(document).ready(function () {
-                $("#btnAjaxCall").click(function () {
+                $("#btnParseFile").click(function () {
+                    var myParseFileClicked = true;
                     var x = document.getElementById("myFile").value;
                     var y = x.replace(/^.*[\\\/]/, '');
                     var val = y.split('.');
@@ -60,10 +57,23 @@
                     $.post("ElasticSearch",
                             {
                                 path: path,
-                                filename: y
+                                filename: y,
+                                myParseFileClicked: true
                             },
                             function (data, status) {
-                                alert("Data: " + data + "\nStatus: " + status);
+                                alert("File Successfully Parsed");
+                            });
+                });
+                $("#btnSearch").click(function () {
+                    alert("Hi" + $('#txtSearch').val());
+                    $.post("ElasticSearch",
+                            {
+                                txtSearch: $('#txtSearch').val(),
+                                myParseFileClicked: false
+                            },
+                            function (responseText) {
+                                alert("File Successfully Parsed");
+                                $('#ajaxGetUserServletResponse').text(responseText);
                             });
                 });
             });

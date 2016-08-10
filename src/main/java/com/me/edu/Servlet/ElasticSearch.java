@@ -11,6 +11,7 @@ import com.me.SmartContracts.Utils.Elastic_Old;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -56,58 +57,48 @@ public class ElasticSearch extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
 
-            String filepath = request.getParameter("path");
-            String fileName = request.getParameter("filename");
+            String myParseFileClicked = request.getParameter("myParseFileClicked");
             /* TODO output your page here. You may use following sample code. */
 
             //Parsing the document
             //Insert the Defined Terms
             try {
                 Node node = nodeBuilder().node();
-                client = node.client();
-                
-                docText = DocumentReader.readDocument(filepath, fileName);
-                DocumentReader.parseString(docText, client);
-                //"Borrowing should be replaced by the user input key"
-                Elastic.getDefinedTerm(client, "definedterms", "term", "1", "Borrowing");
-                node.close();
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(Elastic.class.getName()).log(Level.SEVERE, null, ex);
-            }
+                if (myParseFileClicked.equalsIgnoreCase("true")) {
 
-            Elastic.getDefinedTerm(client, "definedterms", "term", "1", "Borrowing");
-            //Insert the Articles
-            int definedTermsEnd = docText.indexOf("SCHEDULES");
-            String toc = docText.substring(0, definedTermsEnd);
-            String c = docText.substring(definedTermsEnd);
+                    String filepath = request.getParameter("path");
+                    String fileName = request.getParameter("filename");
+                    try {
 
-            System.out.println("Table of content" + toc);
-            System.out.println("--------------------------------");
-            System.out.println("content" + c);
-            String output[];
-            output = toc.split("Article|article|ARTICLE");
-            int count = 0;
-            String outputArrayString = "";
-            int s = 0;
-            StringBuffer tocOutput = new StringBuffer();
+                        client = node.client();
 
-            for (String o : output) {
-                if (count != 0) {
-                    s = Integer.parseInt(String.valueOf(o.charAt(1)));
-                    if (s == count) {
-                        tocOutput.append(o);
-                        tocOutput.append("JigarAnkitNeeraj");
-                        System.out.println(s);
+                        docText = DocumentReader.readDocument(filepath, fileName);
+                        DocumentReader.parseString(docText, client);
+                        //"Borrowing should be replaced by the user input key"
+
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(Elastic.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-                outputArrayString += "Count" + count + o;
-                count++;
-                System.out.println();
-            }
 
+                } else {
+                    String txtSearch = request.getParameter("txtSearch");
+                    Map<String, Object> definedTerms = Elastic.getDefinedTerm(client, "definedterms", "term", "1", txtSearch);
+                    System.out.println(txtSearch);
+                    response.setContentType("text/plain");
+                    Iterator it = definedTerms.entrySet().iterator();
+                    while (it.hasNext()) {
+                        Map.Entry pair = (Map.Entry) it.next();
+                        response.getWriter().write("Defined Terms-->" + pair.getKey() + " = " + pair.getValue());
+                    }
+                    node.close();
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
         } catch (IOException ex) {
             Logger.getLogger(ElasticSearch.class.getName()).log(Level.SEVERE, null, ex);
         }
+
     }
 
 // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

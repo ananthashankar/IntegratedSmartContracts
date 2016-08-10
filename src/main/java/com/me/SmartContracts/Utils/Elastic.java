@@ -84,18 +84,27 @@ public class Elastic {
     }
 
     public static Map<String, Object> getDefinedTerm(Client client, String index, String type, String id, String key) {
-
-        GetResponse getResponse = client.prepareGet(index, type, id)
-                .execute()
-                .actionGet();
-        Map<String, Object> source = getResponse.getSource();
         Map<String, Object> mySource = new HashMap();
+        try {
+            GetResponse getResponse = client.prepareGet(index, type, id)
+                    .execute()
+                    .actionGet();
+            Map<String, Object> source = getResponse.getSource();
 
-        for (String s : source.keySet()) {
-            if (s.equalsIgnoreCase(key)) {
-                mySource.put(s, source.get(s));
-                System.out.println(mySource.keySet() + ":" + mySource.entrySet());
+            try {
+                for (String s : source.keySet()) {
+                    if (s.equalsIgnoreCase(key)) {
+                        mySource.put(s, source.get(s));
+                        System.out.println(mySource.keySet() + ":" + mySource.entrySet());
+                    }
+                }
+            } catch (Exception e) {
+
+                System.out.println(e.getMessage());
+
             }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
         return mySource;
 
