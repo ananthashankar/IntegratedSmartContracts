@@ -51,17 +51,15 @@
                     var path = x.substring(0, x.lastIndexOf("\\") + 1);
                     document.form1.hiddenPath.value = path;
                     document.form1.hiddenFileName.value = y;
-
-                    alert(path);
-                    alert("HiddenPath" + document.form1.hiddenPath.value);
                     $.post("ElasticSearch",
                             {
                                 path: path,
                                 filename: y,
                                 myParseFileClicked: true
                             },
-                            function (data, status) {
-                                alert("File Successfully Parsed");
+                            function () {
+                                $('#demo').text("File Successfully Parsed");
+                                $('#demo').css("color", "green");
                             });
                 });
                 $("#btnSearch").click(function () {
