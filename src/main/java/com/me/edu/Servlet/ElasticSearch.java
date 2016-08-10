@@ -23,6 +23,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
+import org.json.JSONObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,26 +64,30 @@ public class ElasticSearch extends HttpServlet {
             //Parsing the document
             //Insert the Defined Terms
             try {
-                Node node = nodeBuilder().node();
+
                 if (myParseFileClicked.equalsIgnoreCase("true")) {
 
                     String filepath = request.getParameter("path");
                     String fileName = request.getParameter("filename");
                     try {
-
+                        Node node = nodeBuilder().node();
                         client = node.client();
 
                         docText = DocumentReader.readDocument(filepath, fileName);
                         DocumentReader.parseString(docText, client);
-                        //"Borrowing should be replaced by the user input key"
+                        node.close();
 
+                        //Inserting artciles breakdown here
+                        
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(Elastic.class.getName()).log(Level.SEVERE, null, ex);
                     }
-
                 } else {
                     String txtSearch = request.getParameter("txtSearch");
+                    Node node = nodeBuilder().node();
+                    client = node.client();
                     Map<String, Object> definedTerms = Elastic.getDefinedTerm(client, "definedterms", "term", "1", txtSearch);
+                    
                     System.out.println(txtSearch);
                     response.setContentType("text/plain");
                     Iterator it = definedTerms.entrySet().iterator();
@@ -98,7 +103,6 @@ public class ElasticSearch extends HttpServlet {
         } catch (IOException ex) {
             Logger.getLogger(ElasticSearch.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 
 // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

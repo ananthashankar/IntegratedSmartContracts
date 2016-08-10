@@ -58,6 +58,7 @@
                                 myParseFileClicked: true
                             },
                             function () {
+                                alert("Complete Parsing");
                                 $('#demo').text("File Successfully Parsed");
                                 $('#demo').css("color", "green");
                             });
