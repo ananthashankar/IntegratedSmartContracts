@@ -8,8 +8,12 @@ package com.me.edu.Servlet;
 import com.me.SmartContracts.Utils.DocumentReader;
 import com.me.SmartContracts.Utils.Elastic;
 import com.me.SmartContracts.Utils.Elastic_Old;
+import com.me.SmartContracts.Utils.Stanford;
+import com.me.SmartContracts.W2C.AgreementAnalyzer;
+import static com.me.SmartContracts.W2C.AgreementAnalyzer.analyzeDocument;
 import static java.awt.Desktop.getDesktop;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
@@ -25,6 +29,7 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 import org.json.JSONObject;
+import org.nd4j.linalg.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,12 +54,7 @@ public class ElasticSearch extends HttpServlet {
     static Client client;
     static String docText;
     static JSONObject articleJSONObject;
-
-    @RequestMapping("/ElasticSearch")
-    @ResponseBody
-    public void performLogin(@RequestBody String Zip, HttpServletRequest request, HttpServletResponse response) {
-        String abc = Zip;
-    }
+    static String fileName;
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) {
         response.setContentType("text/html;charset=UTF-8");
@@ -70,24 +70,23 @@ public class ElasticSearch extends HttpServlet {
                 if (myParseFileClicked.equalsIgnoreCase("true")) {
 
                     String filepath = request.getParameter("path");
-                    String fileName = request.getParameter("filename");
+                    fileName = request.getParameter("filename");
                     try {
                         docText = DocumentReader.readDocument(filepath, fileName);
                         Node node = nodeBuilder().node();
                         client = node.client();
                         DocumentReader.parseString(docText, client);
                         node.close();
-
-                        //Inserting artciles breakdown here
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(Elastic.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                } else {
+                }
+                if (myParseFileClicked.equalsIgnoreCase("false")) {
                     String txtSearch = request.getParameter("txtSearch");
                     String radioButtonClicked = request.getParameter("radioButtonClicked");
+                    Node node = nodeBuilder().node();
+                    client = node.client();
                     if (radioButtonClicked.equalsIgnoreCase("DefinedTerms")) {
-                        Node node = nodeBuilder().node();
-                        client = node.client();
                         Map<String, Object> definedTerms = Elastic.getDefinedTerm(client, "definedterms", "term", "1", txtSearch);
                         System.out.println(txtSearch);
                         response.setContentType("text/plain");
@@ -99,14 +98,13 @@ public class ElasticSearch extends HttpServlet {
                         node.close();
                     }
                     if (radioButtonClicked.equalsIgnoreCase("Article")) {
-
                         if (articleJSONObject == null) {
                             articleJSONObject = new JSONObject();
                             int definedTermsEnd = docText.indexOf("SCHEDULES");
                             String toc = docText.substring(0, definedTermsEnd);
                             String c = docText.substring(definedTermsEnd);
 
-                            
+                            //This Code we are not using maybe we can comment out
                             String out1[];
                             out1 = toc.split("Article|article|ARTICLE");
                             int count = 0;
@@ -127,13 +125,13 @@ public class ElasticSearch extends HttpServlet {
                                 count++;
                                 System.out.println();
                             }
+                            //Till here
                             System.out.println("---------------------------------------------------Content---------");
                             count = 1;
                             StringBuffer contentOutput = new StringBuffer();
 
                             String splitContent[] = c.split("ARTICLE|Article");
-                            Node node = nodeBuilder().node();
-                            client = node.client();
+
                             for (String o : splitContent) {
                                 o = o.replaceAll("[^a-zA-Z0-9.,\\/#!$%\\^&\\*;:{}=\\-_`~()“”\\s]+", "");
                                 o = o.replaceAll("\n", " ");
@@ -141,20 +139,15 @@ public class ElasticSearch extends HttpServlet {
                                 if (input >= '0' && input <= '9') {
                                     s = Integer.parseInt(String.valueOf(o.charAt(1)));
                                     if (s == count) {
-                                        //System.out.println(s);
-                                        
                                         contentOutput.append(" \n MyArticlesSeparated \n ");
                                         articleJSONObject.put("Article" + count, o.toString());
                                         try {
                                             try {
-
                                                 client.prepareIndex("contract", "article", String.valueOf(count))
                                                         .setSource(articleJSONObject.toString()).execute().actionGet();
                                             } catch (Exception e) {
                                                 System.out.println(e.getMessage());
                                             }
-                                            //"Borrowing should be replaced by the user input key"
-
                                         } catch (Exception ex) {
                                             Logger.getLogger(Elastic.class.getName()).log(Level.SEVERE, null, ex);
                                         }
@@ -164,16 +157,49 @@ public class ElasticSearch extends HttpServlet {
                                     contentOutput.append(o);
                                 }
                             }
+
+                            Map<String, Object> resultArticle = Elastic.searchDocument(client, "contract", "article", txtSearch);
+                            response.setContentType("text/plain");
+                            Iterator it = resultArticle.entrySet().iterator();
+                            while (it.hasNext()) {
+                                Map.Entry pair = (Map.Entry) it.next();
+                                response.getWriter().write("Defined Terms-->" + pair.getKey() + " = " + pair.getValue() + "\n");
+                            }
+
                             node.close();
                         } else {
-                            Node node = nodeBuilder().node();
-                            client = node.client();
-                            Elastic.searchDocument(client, "contract", "article", txtSearch);
+
+                            Map<String, Object> resultFinal = Elastic.searchDocument(client, "contract", "article", txtSearch);
+                            response.setContentType("text/plain");
+                            Iterator it = resultFinal.entrySet().iterator();
+                            while (it.hasNext()) {
+                                Map.Entry pair = (Map.Entry) it.next();
+                                response.getWriter().write("Articles-->" + pair.getKey() + " = " + pair.getValue() + "\n");
+                            }
                             node.close();
                         }
                     }
                     if (radioButtonClicked.equalsIgnoreCase("Section")) {
-
+                    }
+                }
+                if (myParseFileClicked.equalsIgnoreCase("analyzeAgreement")) {
+                    String sentencesOfDocument = Stanford.getSentenceStringFormat(docText);
+                    String analyzeAgreementPath = "C:\\Word2VecVocabulary\\Sentences\\" + fileName + "Sentences.txt";
+                    try {
+                        FileWriter file = new FileWriter(analyzeAgreementPath);
+                        file.write(sentencesOfDocument.toString());
+                        file.flush();
+                        file.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    String filePath = analyzeAgreementPath;
+                    String result;
+                    try {
+                        result = analyzeDocument(filePath);
+                        System.out.println(result);
+                    } catch (Exception ex) {
+                        Logger.getLogger(AgreementAnalyzer.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             } catch (Exception e) {

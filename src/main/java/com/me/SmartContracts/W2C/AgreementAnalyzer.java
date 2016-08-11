@@ -147,7 +147,7 @@ public class AgreementAnalyzer {
 
         // Update Vocabulary
         if ((double) similarityWords / foundWords >= 0.5) {
-            Word2VecModel.updateVocabulary(filePath);
+            Word2VecModel.updateVocabulary(wordVectors, vec);
         }
         return report.toString();
 
@@ -156,11 +156,8 @@ public class AgreementAnalyzer {
     public static ArrayList<String> getSynonym(String str) {
         ArrayList<String> list = new ArrayList<String>();
         WordVectors wordVectors = null;
-
         try {
-
             wordVectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Word2VecVocabulary\\Vocab.txt"));
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -175,24 +172,22 @@ public class AgreementAnalyzer {
     public static void main(String[] args) {
         // TODO Auto-generated method stub
 
-        String filePath = "C:\\Word2VecVocabulary\\Sentences\\Contract2_Sentences.txt";
-        try {
-            String filePath1 = new ClassPathResource(filePath).getFile().getAbsolutePath();
-            String result;
-            try {
-                result = analyzeDocument(filePath1);
-                System.out.println(result);
-            } catch (Exception ex) {
-                Logger.getLogger(AgreementAnalyzer.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(AgreementAnalyzer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        try {
-
-        } catch (Exception e) {
-
-        }
+//        String filePath = "/resources/Sentences/Contract1_Sentences.txt";
+//        try {
+//            String filePath1 = new ClassPathResource(filePath).getFile().getAbsolutePath();
+//            String result;
+//            try {
+//                result = analyzeDocument(filePath1);
+//                System.out.println(result);
+//            } catch (Exception ex) {
+//                Logger.getLogger(AgreementAnalyzer.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+//        } catch (IOException ex) {
+//            Logger.getLogger(AgreementAnalyzer.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//      
+    	ArrayList<String> list = getSynonym("number");
+    	System.out.println(list);
     }
 
 }

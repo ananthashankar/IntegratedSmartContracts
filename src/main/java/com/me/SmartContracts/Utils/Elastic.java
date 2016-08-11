@@ -161,7 +161,7 @@ public class Elastic {
         }
     }
 
-    public static void searchDocument(Client client, String index, String type,
+    public static Map<String, Object> searchDocument(Client client, String index, String type,
             String value) {
 
         QueryBuilder qb = QueryBuilders.queryString(value);
@@ -182,6 +182,7 @@ public class Elastic {
 
             System.out.println(result);
         }
+        return resultFinal;
 
     }
 

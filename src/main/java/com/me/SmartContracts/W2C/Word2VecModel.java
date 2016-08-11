@@ -240,94 +240,9 @@ public class Word2VecModel {
 		}		
 	}
 	
-    public static void updateVocabulary(String filePath) throws Exception{
-    	// Retrieve the vocabulary to update
-    	WordVectors wordVectors = null;
+    public static void updateVocabulary(WordVectors wordVectors, Word2Vec vec) throws Exception{
+    	
     	HashMap<String, Double[]> coll = new HashMap<String, Double[]>();
-    	Map<String, Double[]> coll1 = new HashMap<String, Double[]>();
-    	Map<String, Double[]> coll2 = new HashMap<String, Double[]>();
-
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-
-			// read JSON from a file
-			coll2 = mapper.readValue(
-					new File("C:\\Word2VecVocabulary\\Vocab.json"), 
-					new TypeReference<Map<String, Double[]>>() {
-			});
-			
-			// read Map values from a map file
-//			ObjectInput objectInputStream = new ObjectInputStream(new BufferedInputStream(
-//						new FileInputStream("/Users/Anantha/Desktop/NLP/TestFiles/TrainingOutputDoc/VocabMap.txt")));
-//			coll1 = (Map<String, Double[]>) objectInputStream.readObject();
-//			objectInputStream.close();
-			
-			wordVectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Word2VecVocabulary\\Vocab.txt"));
-			int i=0;
-			String word = wordVectors.vocab().wordAtIndex(0);
-			while(word != null){
-				double[] vec = wordVectors.getWordVector(word);
-				Double[] doub = new Double[vec.length];
-				for(int j=0; j<doub.length; j++){
-					doub[j] = vec[j];
-				}
-				coll.put(word, doub);
-				i++;
-				word = wordVectors.vocab().wordAtIndex(i);
-			}
-			System.out.println("coll size: " + coll.size());
-			System.out.println("coll1 size: " + coll1.size());
-			System.out.println("coll2 size: " + coll2.size());
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-    	            
-        ArrayList<String> stopWords = new ArrayList<>();
-        for(int i=0;i<stopwords.length;i++) {
-        	stopWords.add(stopwords[i]);
-        }
-        
-        SentenceIterator iter = new LineSentenceIterator(new File(filePath));
-        
-        iter.setPreProcessor(new SentencePreProcessor() {
-            @Override
-            public String preProcess(String sentence) {
-                return sentence.toLowerCase();
-            }
-        });
-        
-        org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory t = new DefaultTokenizerFactory();
-        t.setTokenPreProcessor(new CommonPreprocessor());
-        
-        log.info("Building model....");
-        Word2Vec vec = new Word2Vec.Builder()
-        		.batchSize(1000) //# words per minibatch.
-                .minWordFrequency(1) // 
-                .useAdaGrad(false) //
-                .layerSize(16) // word feature vector size
-                .iterations(2) // # iterations to train
-                .learningRate(0.025) // 
-                .minLearningRate(1e-3) // learning rate decays wrt # words. floor learning
-                .negativeSample(10) // sample size 10 words
-                .iterate(iter) //
-                .epochs(1)
-                .tokenizerFactory(t)
-                .stopWords(stopWords)
-                .seed(142)
-                .build();
-
-        log.info("Fitting Word2Vec model....");
-       
-        vec.fit();
-
-        log.info("Writing word vectors to text file....");
-        	
-        log.info("Closest Words:");
         
         Object[] words = vec.getVocab().words().toArray();
         

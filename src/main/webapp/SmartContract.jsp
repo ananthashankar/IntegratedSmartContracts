@@ -8,9 +8,6 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>Sales List</title>
-
-
-
         <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
         <!-- jQuery library -->
@@ -39,9 +36,12 @@
                 <br>
                 <input type="radio" name="ElasticSearchOption" value="DefinedTerms"> Defined Terms<br>
                 <input type="radio" name="ElasticSearchOption" value="Article"> Article<br>
-                <input type="radio" name="ElasticSearchOption" value="Section"> Section
+                <input type="radio" name="ElasticSearchOption" value="Section"> Section<br>
+                <input type="radio" name="ElasticSearchOption" value="Sysnonym"> Synonymn<br>
                 <br>
                 <button type="button" name="btnSearch" id="btnSearch">Search</button>
+                <br>
+                <button type="button" name="btnAnalyzeAgreement" id="btnAnalyzeAgreement">Analyze Agreement</button>
                 <div id="ajaxGetUserServletResponse">
                 </div>
         </form>
@@ -69,14 +69,33 @@
                             });
                 });
                 $("#btnSearch").click(function () {
-                    var radioButtonClicked=$('input[name=ElasticSearchOption]:checked').val();
+                    var radioButtonClicked = $('input[name=ElasticSearchOption]:checked').val();
                     alert($('input[name=ElasticSearchOption]:checked').val());
                     alert("Hi" + $('#txtSearch').val());
                     $.post("ElasticSearch",
                             {
                                 txtSearch: $('#txtSearch').val(),
                                 myParseFileClicked: false,
-                                radioButtonClicked:radioButtonClicked
+                                radioButtonClicked: radioButtonClicked
+                            },
+                            function (responseText) {
+                                alert("File Successfully Parsed");
+                                $('#ajaxGetUserServletResponse').text(responseText);
+                            });
+                });
+                $("#btnAnalyzeAgreement").click(function () {
+                    var x = document.getElementById("myFile").value;
+                    var y = x.replace(/^.*[\\\/]/, '');
+                    var val = y.split('.');
+                    document.getElementById("demo").innerHTML = x;
+                    var path = x.substring(0, x.lastIndexOf("\\") + 1);
+                    document.form1.hiddenPath.value = path;
+                    document.form1.hiddenFileName.value = y;
+                    $.post("ElasticSearch",
+                            {
+                                path: path,
+                                filename: y,
+                                myParseFileClicked: "analyzeAgreement",
                             },
                             function (responseText) {
                                 alert("File Successfully Parsed");

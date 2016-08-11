@@ -49,6 +49,23 @@ public class Stanford {
         return posTagged;
     }
 
+    public static String getSentenceStringFormat(String input) {
+        String paragraph = input;
+        Reader reader = new StringReader(paragraph);
+        DocumentPreprocessor dp = new DocumentPreprocessor(reader);
+        List<String> sentenceList = new ArrayList<String>();
+        for (List<HasWord> sentence : dp) {
+            String sentenceString = Sentence.listToString(sentence);
+            sentenceList.add(sentenceString.toString());
+        }
+        String sent = "";
+        for (String sentence : sentenceList) {
+            System.out.println(sentence);
+            sent = sent + " " + sentence + "\n";
+        }
+        return sent;
+    }
+
     public static List<String> getSentence(String input) {
         String paragraph = input;
         Reader reader = new StringReader(paragraph);
