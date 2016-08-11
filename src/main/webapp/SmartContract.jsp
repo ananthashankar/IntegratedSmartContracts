@@ -20,7 +20,7 @@
         <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     </head>
     <body>
-        <form name="form1" action="ElasticSearch">
+        <form name="form1" action="ElasticSearch" enctype="multipart/form-data">
             <div class="container">
                 <h1> Smart Contracts</h1>
                 Select a file to upload:
@@ -35,6 +35,12 @@
                 <input type="hidden" name="action" value="getFile"/>
                 <p id="demo" name="demo"></p>
                 <input type="text" name="txtSearch" id="txtSearch"><br>
+
+                <br>
+                <input type="radio" name="ElasticSearchOption" value="DefinedTerms"> Defined Terms<br>
+                <input type="radio" name="ElasticSearchOption" value="Article"> Article<br>
+                <input type="radio" name="ElasticSearchOption" value="Section"> Section
+                <br>
                 <button type="button" name="btnSearch" id="btnSearch">Search</button>
                 <div id="ajaxGetUserServletResponse">
                 </div>
@@ -43,7 +49,6 @@
         <script>
             $(document).ready(function () {
                 $("#btnParseFile").click(function () {
-                    var myParseFileClicked = true;
                     var x = document.getElementById("myFile").value;
                     var y = x.replace(/^.*[\\\/]/, '');
                     var val = y.split('.');
@@ -64,11 +69,14 @@
                             });
                 });
                 $("#btnSearch").click(function () {
+                    var radioButtonClicked=$('input[name=ElasticSearchOption]:checked').val();
+                    alert($('input[name=ElasticSearchOption]:checked').val());
                     alert("Hi" + $('#txtSearch').val());
                     $.post("ElasticSearch",
                             {
                                 txtSearch: $('#txtSearch').val(),
-                                myParseFileClicked: false
+                                myParseFileClicked: false,
+                                radioButtonClicked:radioButtonClicked
                             },
                             function (responseText) {
                                 alert("File Successfully Parsed");

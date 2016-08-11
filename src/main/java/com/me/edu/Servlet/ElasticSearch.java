@@ -8,6 +8,7 @@ package com.me.edu.Servlet;
 import com.me.SmartContracts.Utils.DocumentReader;
 import com.me.SmartContracts.Utils.Elastic;
 import com.me.SmartContracts.Utils.Elastic_Old;
+import static java.awt.Desktop.getDesktop;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -47,6 +48,7 @@ public class ElasticSearch extends HttpServlet {
      */
     static Client client;
     static String docText;
+    static JSONObject articleJSONObject;
 
     @RequestMapping("/ElasticSearch")
     @ResponseBody
@@ -70,32 +72,109 @@ public class ElasticSearch extends HttpServlet {
                     String filepath = request.getParameter("path");
                     String fileName = request.getParameter("filename");
                     try {
+                        docText = DocumentReader.readDocument(filepath, fileName);
                         Node node = nodeBuilder().node();
                         client = node.client();
-
-                        docText = DocumentReader.readDocument(filepath, fileName);
                         DocumentReader.parseString(docText, client);
                         node.close();
 
                         //Inserting artciles breakdown here
-                        
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(Elastic.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } else {
                     String txtSearch = request.getParameter("txtSearch");
-                    Node node = nodeBuilder().node();
-                    client = node.client();
-                    Map<String, Object> definedTerms = Elastic.getDefinedTerm(client, "definedterms", "term", "1", txtSearch);
-                    
-                    System.out.println(txtSearch);
-                    response.setContentType("text/plain");
-                    Iterator it = definedTerms.entrySet().iterator();
-                    while (it.hasNext()) {
-                        Map.Entry pair = (Map.Entry) it.next();
-                        response.getWriter().write("Defined Terms-->" + pair.getKey() + " = " + pair.getValue());
+                    String radioButtonClicked = request.getParameter("radioButtonClicked");
+                    if (radioButtonClicked.equalsIgnoreCase("DefinedTerms")) {
+                        Node node = nodeBuilder().node();
+                        client = node.client();
+                        Map<String, Object> definedTerms = Elastic.getDefinedTerm(client, "definedterms", "term", "1", txtSearch);
+                        System.out.println(txtSearch);
+                        response.setContentType("text/plain");
+                        Iterator it = definedTerms.entrySet().iterator();
+                        while (it.hasNext()) {
+                            Map.Entry pair = (Map.Entry) it.next();
+                            response.getWriter().write("Defined Terms-->" + pair.getKey() + " = " + pair.getValue());
+                        }
+                        node.close();
                     }
-                    node.close();
+                    if (radioButtonClicked.equalsIgnoreCase("Article")) {
+
+                        if (articleJSONObject == null) {
+                            articleJSONObject = new JSONObject();
+                            int definedTermsEnd = docText.indexOf("SCHEDULES");
+                            String toc = docText.substring(0, definedTermsEnd);
+                            String c = docText.substring(definedTermsEnd);
+
+                            
+                            String out1[];
+                            out1 = toc.split("Article|article|ARTICLE");
+                            int count = 0;
+                            String outputArrayString = "";
+                            int s = 0;
+                            StringBuffer tocOutput = new StringBuffer();
+
+                            for (String o : out1) {
+                                if (count != 0) {
+                                    s = Integer.parseInt(String.valueOf(o.charAt(1)));
+                                    if (s == count) {
+                                        tocOutput.append(o);
+                                        tocOutput.append("JigarAnkitNeeraj");
+                                        System.out.println(s);
+                                    }
+                                }
+                                outputArrayString += "Count" + count + o;
+                                count++;
+                                System.out.println();
+                            }
+                            System.out.println("---------------------------------------------------Content---------");
+                            count = 1;
+                            StringBuffer contentOutput = new StringBuffer();
+
+                            String splitContent[] = c.split("ARTICLE|Article");
+                            Node node = nodeBuilder().node();
+                            client = node.client();
+                            for (String o : splitContent) {
+                                o = o.replaceAll("[^a-zA-Z0-9.,\\/#!$%\\^&\\*;:{}=\\-_`~()“”\\s]+", "");
+                                o = o.replaceAll("\n", " ");
+                                char input = o.charAt(1);
+                                if (input >= '0' && input <= '9') {
+                                    s = Integer.parseInt(String.valueOf(o.charAt(1)));
+                                    if (s == count) {
+                                        //System.out.println(s);
+                                        
+                                        contentOutput.append(" \n MyArticlesSeparated \n ");
+                                        articleJSONObject.put("Article" + count, o.toString());
+                                        try {
+                                            try {
+
+                                                client.prepareIndex("contract", "article", String.valueOf(count))
+                                                        .setSource(articleJSONObject.toString()).execute().actionGet();
+                                            } catch (Exception e) {
+                                                System.out.println(e.getMessage());
+                                            }
+                                            //"Borrowing should be replaced by the user input key"
+
+                                        } catch (Exception ex) {
+                                            Logger.getLogger(Elastic.class.getName()).log(Level.SEVERE, null, ex);
+                                        }
+                                        System.out.println(s);
+                                        count++;
+                                    }
+                                    contentOutput.append(o);
+                                }
+                            }
+                            node.close();
+                        } else {
+                            Node node = nodeBuilder().node();
+                            client = node.client();
+                            Elastic.searchDocument(client, "contract", "article", txtSearch);
+                            node.close();
+                        }
+                    }
+                    if (radioButtonClicked.equalsIgnoreCase("Section")) {
+
+                    }
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());

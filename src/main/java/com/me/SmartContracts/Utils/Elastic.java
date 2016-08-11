@@ -174,12 +174,15 @@ public class Elastic {
                 .execute()
                 .actionGet();
         SearchHit[] results2 = response2.getHits().getHits();
+        Map<String, Object> resultFinal = new HashMap();
         for (SearchHit hit : results2) {
             System.out.println("------------------------------");
             Map<String, Object> result = hit.getSource();
+            resultFinal.put(result.keySet().toString(), result.values());
 
             System.out.println(result);
         }
+
     }
 
     public static void deleteDocument(Client client, String index, String type, String id) {
