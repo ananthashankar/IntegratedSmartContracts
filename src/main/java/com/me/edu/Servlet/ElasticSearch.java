@@ -5,20 +5,22 @@
  */
 package com.me.edu.Servlet;
 
+import com.me.SmartContracts.Utils.ClientProvider;
 import com.me.SmartContracts.Utils.DocumentReader;
 import com.me.SmartContracts.Utils.Elastic;
-import com.me.SmartContracts.Utils.Elastic_Old;
+import com.me.SmartContracts.Utils.NERTools;
 import com.me.SmartContracts.Utils.Stanford;
 import static com.me.SmartContracts.Utils.StanfordNER.identifyNER;
 import com.me.SmartContracts.W2C.AgreementAnalyzer;
 import static com.me.SmartContracts.W2C.AgreementAnalyzer.analyzeDocument;
 import static com.me.SmartContracts.W2C.AgreementAnalyzer.getSynonym;
-import static java.awt.Desktop.getDesktop;
-import java.io.FileNotFoundException;
+
+import java.util.LinkedHashSet;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -29,14 +31,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 import org.json.JSONObject;
-import org.nd4j.linalg.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  *
@@ -61,27 +58,30 @@ public class ElasticSearch extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) {
         response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
 
+        try (PrintWriter out = response.getWriter()) {
+            //client = ClientProvider.instance().prepareClient();
             String myParseFileClicked = request.getParameter("myParseFileClicked");
             /* TODO output your page here. You may use following sample code. */
-
             //Parsing the document
             //Insert the Defined Terms
             try {
-
                 if (myParseFileClicked.equalsIgnoreCase("true")) {
 
+                    
                     String filepath = request.getParameter("path");
+                    Node node=nodeBuilder().node();
+                    client=node.client();
                     fileName = request.getParameter("filename");
                     docText = DocumentReader.readDocument(filepath, fileName);
+                    
+                    DocumentReader.parseString(docText, client);
+             
+                    //docText = "Hello";
+                    HashMap<String, LinkedHashSet<String>> maturityHashMap = NERTools.matuToMap("C:\\Users\\User\\Documents\\NetBeansProjects\\SmartContractsWeb-master\\classifiers\\contract-maturity-class-model.ser.gz", docText);
                     //docText = "Hello";
                     String result = identifyNER(docText,
                             "C:\\Users\\User\\Documents\\NetBeansProjects\\SmartContractsWeb-master\\classifiers\\english.muc.7class.distsim.crf.ser.gz").toString();
-
-                    FileWriter fileout = new FileWriter("stanfordNEROutput.json", false);
-                    fileout.write(result);
-                    fileout.close();
 
                 }
                 if (myParseFileClicked.equalsIgnoreCase("false")) {
@@ -212,7 +212,6 @@ public class ElasticSearch extends HttpServlet {
                     } catch (Exception ex) {
                         Logger.getLogger(AgreementAnalyzer.class.getName()).log(Level.SEVERE, null, ex);
                     }
-
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -220,6 +219,7 @@ public class ElasticSearch extends HttpServlet {
         } catch (Exception ex) {
             System.out.append(ex.getMessage());
         }
+
     }
 
 // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
