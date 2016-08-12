@@ -147,7 +147,7 @@ public class AgreementAnalyzer {
 
         // Update Vocabulary
         if ((double) similarityWords / foundWords >= 0.5) {
-            Word2VecModel.updateVocabulary(wordVectors, vec);
+            Word2VecModel.updateVocabulary(coll, vec);
         }
         return report.toString();
 

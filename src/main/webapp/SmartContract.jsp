@@ -37,13 +37,14 @@
                 <input type="radio" name="ElasticSearchOption" value="DefinedTerms"> Defined Terms<br>
                 <input type="radio" name="ElasticSearchOption" value="Article"> Article<br>
                 <input type="radio" name="ElasticSearchOption" value="Section"> Section<br>
-                <input type="radio" name="ElasticSearchOption" value="Sysnonym"> Synonymn<br>
+                <input type="radio" name="ElasticSearchOption" value="Semantic"> Semantic Search<br>
                 <br>
                 <button type="button" name="btnSearch" id="btnSearch">Search</button>
                 <br>
                 <button type="button" name="btnAnalyzeAgreement" id="btnAnalyzeAgreement">Analyze Agreement</button>
                 <div id="ajaxGetUserServletResponse">
                 </div>
+                <textarea rows="4" cols="50" id="txtAnalyzeAgreement"></textarea>
         </form>
 
         <script>
@@ -99,7 +100,7 @@
                             },
                             function (responseText) {
                                 alert("File Successfully Parsed");
-                                $('#ajaxGetUserServletResponse').text(responseText);
+                                $('#txtAnalyzeAgreement').val(responseText);
                             });
                 });
             });

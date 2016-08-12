@@ -9,13 +9,16 @@ import com.me.SmartContracts.Utils.DocumentReader;
 import com.me.SmartContracts.Utils.Elastic;
 import com.me.SmartContracts.Utils.Elastic_Old;
 import com.me.SmartContracts.Utils.Stanford;
+import static com.me.SmartContracts.Utils.StanfordNER.identifyNER;
 import com.me.SmartContracts.W2C.AgreementAnalyzer;
 import static com.me.SmartContracts.W2C.AgreementAnalyzer.analyzeDocument;
+import static com.me.SmartContracts.W2C.AgreementAnalyzer.getSynonym;
 import static java.awt.Desktop.getDesktop;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -71,21 +74,20 @@ public class ElasticSearch extends HttpServlet {
 
                     String filepath = request.getParameter("path");
                     fileName = request.getParameter("filename");
-                    try {
-                        docText = DocumentReader.readDocument(filepath, fileName);
-                        Node node = nodeBuilder().node();
-                        client = node.client();
-                        DocumentReader.parseString(docText, client);
-                        node.close();
-                    } catch (FileNotFoundException ex) {
-                        Logger.getLogger(Elastic.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    docText = DocumentReader.readDocument(filepath, fileName);
+                    //docText = "Hello";
+                    String result = identifyNER(docText,
+                            "C:\\Users\\User\\Documents\\NetBeansProjects\\SmartContractsWeb-master\\classifiers\\english.muc.7class.distsim.crf.ser.gz").toString();
+
+                    FileWriter fileout = new FileWriter("stanfordNEROutput.json", false);
+                    fileout.write(result);
+                    fileout.close();
+
                 }
                 if (myParseFileClicked.equalsIgnoreCase("false")) {
                     String txtSearch = request.getParameter("txtSearch");
                     String radioButtonClicked = request.getParameter("radioButtonClicked");
-                    Node node = nodeBuilder().node();
-                    client = node.client();
+
                     if (radioButtonClicked.equalsIgnoreCase("DefinedTerms")) {
                         Map<String, Object> definedTerms = Elastic.getDefinedTerm(client, "definedterms", "term", "1", txtSearch);
                         System.out.println(txtSearch);
@@ -95,7 +97,7 @@ public class ElasticSearch extends HttpServlet {
                             Map.Entry pair = (Map.Entry) it.next();
                             response.getWriter().write("Defined Terms-->" + pair.getKey() + " = " + pair.getValue());
                         }
-                        node.close();
+
                     }
                     if (radioButtonClicked.equalsIgnoreCase("Article")) {
                         if (articleJSONObject == null) {
@@ -166,7 +168,6 @@ public class ElasticSearch extends HttpServlet {
                                 response.getWriter().write("Defined Terms-->" + pair.getKey() + " = " + pair.getValue() + "\n");
                             }
 
-                            node.close();
                         } else {
 
                             Map<String, Object> resultFinal = Elastic.searchDocument(client, "contract", "article", txtSearch);
@@ -176,15 +177,24 @@ public class ElasticSearch extends HttpServlet {
                                 Map.Entry pair = (Map.Entry) it.next();
                                 response.getWriter().write("Articles-->" + pair.getKey() + " = " + pair.getValue() + "\n");
                             }
-                            node.close();
+
                         }
                     }
                     if (radioButtonClicked.equalsIgnoreCase("Section")) {
+
+                    }
+                    if (radioButtonClicked.equalsIgnoreCase("Semantic")) {
+
+                        ArrayList<String> synonymnList = getSynonym(txtSearch);
+                        response.setContentType("text/plain");
+                        for (String synonymn : synonymnList) {
+                            response.getWriter().write(synonymn + " ");
+                        }
                     }
                 }
                 if (myParseFileClicked.equalsIgnoreCase("analyzeAgreement")) {
                     String sentencesOfDocument = Stanford.getSentenceStringFormat(docText);
-                    String analyzeAgreementPath = "C:\\Word2VecVocabulary\\Sentences\\" + fileName + "Sentences.txt";
+                    String analyzeAgreementPath = "C:\\Word2VecVocabulary\\Sentences\\" + fileName.substring(0, fileName.length() - 4) + "_Sentences.txt";
                     try {
                         FileWriter file = new FileWriter(analyzeAgreementPath);
                         file.write(sentencesOfDocument.toString());
@@ -197,16 +207,18 @@ public class ElasticSearch extends HttpServlet {
                     String result;
                     try {
                         result = analyzeDocument(filePath);
-                        System.out.println(result);
+                        response.setContentType("text/plain");
+                        response.getWriter().write(result);
                     } catch (Exception ex) {
                         Logger.getLogger(AgreementAnalyzer.class.getName()).log(Level.SEVERE, null, ex);
                     }
+
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
-        } catch (IOException ex) {
-            Logger.getLogger(ElasticSearch.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            System.out.append(ex.getMessage());
         }
     }
 

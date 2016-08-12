@@ -240,11 +240,9 @@ public class Word2VecModel {
 		}		
 	}
 	
-    public static void updateVocabulary(WordVectors wordVectors, Word2Vec vec) throws Exception{
+    public static void updateVocabulary(HashMap<String, Double[]> coll, Word2Vec vec) throws Exception{
     	
-    	HashMap<String, Double[]> coll = new HashMap<String, Double[]>();
-        
-        Object[] words = vec.getVocab().words().toArray();
+    	Object[] words = vec.getVocab().words().toArray();
         
         for(Object o : words){
         	String wrd = o.toString();
